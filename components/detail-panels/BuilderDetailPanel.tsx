@@ -20,9 +20,11 @@ interface BuilderProfile {
   email: string;
   cohort: string;
   days_attended: number;
+  total_days: number; // Dynamic: total curriculum days for cohort
   attendance_percentage: number;
   punctuality_rate: number | null;
   tasks_completed: number;
+  total_tasks: number; // Dynamic: total tasks for cohort
   completion_percentage: number;
   engagement_score: number;
   attendance: AttendanceRecord[];
@@ -185,13 +187,13 @@ export default function BuilderDetailPanel({ builderId, isOpen, onClose, onTaskC
                 <div className="grid grid-cols-2 gap-4">
                   <StatCard
                     label="Attendance"
-                    value={`${builder.days_attended}/17`}
+                    value={`${builder.days_attended}/${builder.total_days}`}
                     icon={<Calendar className="w-5 h-5" />}
                     colorScheme={builder.attendance_percentage >= 90 ? 'green' : builder.attendance_percentage >= 70 ? 'blue' : 'yellow'}
                   />
                   <StatCard
                     label="Tasks Completed"
-                    value={`${builder.tasks_completed}/107`}
+                    value={`${builder.tasks_completed}/${builder.total_tasks}`}
                     icon={<CheckCircle className="w-5 h-5" />}
                     colorScheme={builder.completion_percentage >= 80 ? 'green' : builder.completion_percentage >= 60 ? 'blue' : 'yellow'}
                   />
@@ -206,8 +208,8 @@ export default function BuilderDetailPanel({ builderId, isOpen, onClose, onTaskC
                 </h3>
                 <ProgressBar
                   value={builder.days_attended}
-                  max={17}
-                  label={`${builder.days_attended}/17 days attended`}
+                  max={builder.total_days}
+                  label={`${builder.days_attended}/${builder.total_days} days attended`}
                   showPercentage={true}
                 />
                 <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
@@ -260,11 +262,11 @@ export default function BuilderDetailPanel({ builderId, isOpen, onClose, onTaskC
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-blue-600" />
-                  Completed Tasks ({builder.tasks.length}/107)
+                  Completed Tasks ({builder.tasks.length}/{builder.total_tasks})
                 </h3>
                 <ProgressBar
                   value={builder.tasks_completed}
-                  max={107}
+                  max={builder.total_tasks}
                   label="Task completion progress"
                   showPercentage={true}
                 />
