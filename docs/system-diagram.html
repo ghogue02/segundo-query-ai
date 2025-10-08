@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Query AI - System Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        .header-left {
+            flex: 1;
+        }
+        h1 {
+            color: #2d3748;
+            margin: 0 0 5px 0;
+            font-size: 2em;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 1em;
+            margin: 0;
+        }
+        .url {
+            background: #f7fafc;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-size: 0.9em;
+            min-width: 400px;
+        }
+        .url a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .url a:hover {
+            text-decoration: underline;
+        }
+        .diagrams-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .diagram-container {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .diagram-container h2 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.2em;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        .legend-item h3 {
+            margin: 0 0 8px 0;
+            color: #2d3748;
+            font-size: 0.95em;
+        }
+        .legend-item p {
+            margin: 0;
+            color: #4a5568;
+            line-height: 1.5;
+            font-size: 0.85em;
+        }
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .key-points, .examples {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .key-points {
+            border-left: 4px solid #48bb78;
+        }
+        .examples {
+            border-left: 4px solid #4299e1;
+        }
+        .key-points h2, .examples h2 {
+            color: #2d3748;
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+        }
+        .key-points ul, .examples ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .key-points li, .examples li {
+            padding: 6px 0;
+            color: #4a5568;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+        .key-points li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .examples li:before {
+            content: "• ";
+            color: #4299e1;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 1200px) {
+            .diagrams-row {
+                grid-template-columns: 1fr;
+            }
+            .legend {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bottom-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+            }
+            .url {
+                min-width: auto;
+                width: 100%;
+            }
+            .legend {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Second Query AI - System Architecture</h1>
+                <p class="subtitle">Natural Language Analytics Dashboard</p>
+            </div>
+            <div class="url">
+                <strong>Production:</strong><br>
+                <a href="https://segundo-query-pepbok4ox-gregs-projects-61e51c01.vercel.app" target="_blank">
+                    View Dashboard →
+                </a>
+            </div>
+        </div>
+
+        <div class="diagrams-row">
+            <div class="diagram-container">
+                <h2>System Flow</h2>
+                <div class="mermaid">
+graph TD
+    A[👤 User Question] -->|Natural Language| B[🤖 AI Processing]
+    B --> C[📝 SQL Query]
+    C --> D[(🗄️ Database)]
+    D --> E[🔄 Processing]
+    E --> F[🎨 Visualization]
+    F --> G[🖥️ Display]
+    G -->|Click| H[🔍 Details]
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style D fill:#f3e5f5
+    style F fill:#e8f5e9
+    style G fill:#fce4ec
+    style H fill:#fff9c4
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <h2>Query Sequence</h2>
+                <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant AI as Claude
+    participant DB as Database
+    participant UI as Display
+
+    U->>AI: "Top builders?"
+    AI->>DB: SELECT query
+    DB-->>AI: Data
+    AI->>UI: Chart + Summary
+    UI-->>U: Show results
+    U->>UI: Click bar
+    UI-->>U: Details panel
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <h3>1️⃣ User Input</h3>
+                <p>Ask questions in plain English. Pre-loaded templates available.</p>
+            </div>
+
+            <div class="legend-item">
+                <h3>2️⃣ AI Translation</h3>
+                <p>Claude AI interprets intent and generates database queries.</p>
+            </div>
+
+            <div class="legend-item">
+                <h3>3️⃣ Database Query</h3>
+                <p>Live data: 75 builders, 107 tasks, 18 days. Auto-filtered.</p>
+            </div>
+
+            <div class="legend-item">
+                <h3>4️⃣ Visualization</h3>
+                <p>AI selects best chart type with interactive elements.</p>
+            </div>
+
+            <div class="legend-item">
+                <h3>5️⃣ Interactive Results</h3>
+                <p>Click any data point for builder profiles and task details.</p>
+            </div>
+
+            <div class="legend-item">
+                <h3>6️⃣ Real-Time</h3>
+                <p>Always current. No manual exports or stale reports.</p>
+            </div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="key-points">
+                <h2>Key Features</h2>
+                <ul>
+                    <li><strong>Natural Language:</strong> Talk, don't type SQL</li>
+                    <li><strong>Auto Visualization:</strong> Best charts automatically</li>
+                    <li><strong>Live Data:</strong> Always current information</li>
+                    <li><strong>Interactive:</strong> Click to explore deeper</li>
+                    <li><strong>Smart Filters:</strong> Excludes staff automatically</li>
+                    <li><strong>No Training:</strong> Non-technical team friendly</li>
+                </ul>
+            </div>
+
+            <div class="examples">
+                <h2>Example Questions</h2>
+                <ul>
+                    <li>"Which builders completed the most tasks?"</li>
+                    <li>"Show attendance trends for last 2 weeks"</li>
+                    <li>"Who has the highest completion rate?"</li>
+                    <li>"What was attendance on October 1st?"</li>
+                    <li>"Show all tasks for Alex Rodriguez"</li>
+                    <li>"Which tasks had lowest completion?"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                wrap: true,
+                diagramMarginX: 10,
+                diagramMarginY: 10
+            }
+        });
+    </script>
+</body>
+</html>

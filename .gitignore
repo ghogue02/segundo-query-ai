@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env*.local
+*.env
+
+# Secrets
+*credentials*.json
+*secret*.json
+*key*.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel
+
+# Docs with secrets
+DEPLOYMENT.md
+SUMMARY.md
+HANDOFF*.md
+FINAL_DELIVERY.md
+VERCEL_DEPLOYMENT_GUIDE.md
+docs/BIGQUERY_INTEGRATION.md
+docs/METRICS-DASHBOARD-COMPLETE.md

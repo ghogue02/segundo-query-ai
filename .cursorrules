@@ -1,0 +1,52 @@
+# Segundo Query AI - Cursor/AI Agent Rules
+
+## Critical CSS Configuration
+
+This project uses **Tailwind v4 + shadcn/ui**. Follow these rules exactly:
+
+### globals.css Format (NEVER change this structure):
+```css
+@import "tailwindcss";
+
+:root {
+  --background: hsl(0 0% 100%);  /* ✅ Wrapped in hsl() */
+}
+
+@theme inline {
+  --color-background: var(--background);  /* ✅ NO hsl() wrapper */
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+```
+
+### NEVER:
+- ❌ Create `tailwind.config.ts` (breaks Tailwind v4)
+- ❌ Remove `hsl()` wrapper from :root variables
+- ❌ Change `@import "tailwindcss"` to `@tailwind base`
+- ❌ Remove @radix-ui packages
+- ❌ Use inline colors (`bg-white` → use `bg-background`)
+
+### ALWAYS:
+- ✅ Add accessibility (role, aria-label, tabIndex, onKeyDown)
+- ✅ Use size-* utility (`size-4` not `w-4 h-4`)
+- ✅ Cap attendance at 100% in SQL (LEAST(100, ...))
+- ✅ Exclude Thu/Fri (DOW NOT IN (4, 5))
+- ✅ Block excluded user IDs: 129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332
+- ✅ Test build before commit: `npm run build`
+
+## Data Rules
+- 76 active builders (September 2025 cohort)
+- 8 weeks (Sept 6 - Oct 29, 2025)
+- Class days: Mon/Tue/Wed/Sat/Sun (NO Thu/Fri)
+- Current week auto-detected via `/lib/utils/cohort-dates.ts`
+
+## Security
+- NEVER commit .env files
+- NEVER hardcode API keys
+- ALWAYS use environment variables
+- ALWAYS return 404 for excluded builder IDs
+
+See `/SHADCN-TAILWIND-V4-RULES.md` for complete guidelines.

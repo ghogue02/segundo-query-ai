@@ -1,0 +1,120 @@
+{
+  "attendance_schema": [
+    {
+      "column_name": "attendance_id",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "attendance_date",
+      "data_type": "date"
+    },
+    {
+      "column_name": "check_in_time",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "photo_url",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "late_arrival_minutes",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "status",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "notes",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "attendance_sample": [
+    {
+      "attendance_id": 1239,
+      "user_id": 256,
+      "attendance_date": "2025-09-27T00:00:00.000Z",
+      "check_in_time": "2025-09-27T10:04:07.000Z",
+      "photo_url": null,
+      "late_arrival_minutes": 4,
+      "status": "late",
+      "notes": null,
+      "created_at": "2025-09-27T14:04:07.254Z",
+      "updated_at": "2025-09-27T14:04:07.254Z"
+    },
+    {
+      "attendance_id": 2,
+      "user_id": 66,
+      "attendance_date": "2025-09-06T00:00:00.000Z",
+      "check_in_time": "2025-09-06T13:34:18.780Z",
+      "photo_url": null,
+      "late_arrival_minutes": 0,
+      "status": "present",
+      "notes": null,
+      "created_at": "2025-09-06T13:34:18.933Z",
+      "updated_at": "2025-09-06T13:34:18.933Z"
+    },
+    {
+      "attendance_id": 3,
+      "user_id": 69,
+      "attendance_date": "2025-09-06T00:00:00.000Z",
+      "check_in_time": "2025-09-06T13:34:47.691Z",
+      "photo_url": null,
+      "late_arrival_minutes": 0,
+      "status": "present",
+      "notes": null,
+      "created_at": "2025-09-06T13:34:47.843Z",
+      "updated_at": "2025-09-06T13:34:47.843Z"
+    }
+  ],
+  "curriculum_schema": [
+    {
+      "column_name": "id",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "day_number",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "day_date",
+      "data_type": "date"
+    },
+    {
+      "column_name": "day_type",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "daily_goal",
+      "data_type": "text"
+    },
+    {
+      "column_name": "learning_objectives",
+      "data_type": "ARRAY"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "column_name": "cohort",
+      "data_type": "character varying"
+    }
+  ]
+}

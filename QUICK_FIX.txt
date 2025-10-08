@@ -1,0 +1,34 @@
+DATABASE CONNECTION ISSUE - QUICK FIX
+======================================
+
+The app is deployed but can't reach your PostgreSQL database.
+
+FASTEST FIX (2 minutes):
+------------------------
+
+Your database is at: 34.57.101.141
+
+1. Go to your database hosting service (Google Cloud SQL, AWS RDS, etc.)
+
+2. Find "Networking" or "Security Groups" settings
+
+3. Add this IP range to allowed connections:
+   0.0.0.0/0
+   
+   (This allows all IPs - simplest for testing)
+
+4. Save and wait 1-2 minutes
+
+5. Test:
+   curl https://segundo-query-jr8lrlxix-gregs-projects-61e51c01.vercel.app/api/health
+   
+   Should show: "database": "connected"
+
+THAT'S IT!
+
+More secure option: Instead of 0.0.0.0/0, add:
+- 76.76.21.0/24
+- 76.76.22.0/24  
+- 76.76.23.0/24
+
+These are Vercel's IP ranges.

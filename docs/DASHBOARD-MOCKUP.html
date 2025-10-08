@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrics Dashboard Mockup - Defined Metrics Tab</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Tabs */
+        .tabs {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 0;
+        }
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #666;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .filter-section {
+            margin-bottom: 24px;
+        }
+        .filter-section h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .filter-option input[type="radio"],
+        .filter-option input[type="checkbox"] {
+            margin: 0;
+        }
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 20px 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* KPI Cards */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .kpi-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .kpi-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin: 8px 0;
+        }
+        .kpi-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .kpi-change.positive { color: #48bb78; }
+        .kpi-change.negative { color: #f56565; }
+        .kpi-change.neutral { color: #666; }
+
+        /* Chart Rows */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .chart-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        .chart-placeholder {
+            height: 220px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Full Width Charts */
+        .full-chart-row {
+            margin-bottom: 24px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #d0d5dd;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Legend Badge */
+        .legend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #666;
+            cursor: help;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Cohort Analytics Dashboard</h1>
+        <div class="header-actions">
+            <button class="btn">📖 Legend</button>
+            <button class="btn">💾 Save Preset</button>
+            <button class="btn-primary">📤 Export</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab">Natural Language</div>
+        <div class="tab active">Defined Metrics</div>
+        <div class="tab">Terminology Legend</div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Filters -->
+        <div class="sidebar">
+            <div class="filter-section">
+                <h3>Time Range</h3>
+                <div class="filter-option">
+                    <input type="radio" name="time" id="7days">
+                    <label for="7days">Last 7 days</label>
+                </div>
+                <div class="filter-option">
+                    <input type="radio" name="time" id="14days">
+                    <label for="14days">Last 14 days</label>
+                </div>
+                <div class="filter-option">
+                    <input type="radio" name="time" id="30days">
+                    <label for="30days">Last 30 days</label>
+                </div>
+                <div class="filter-option">
+                    <input type="radio" name="time" id="alltime" checked>
+                    <label for="alltime">All time</label>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="filter-section">
+                <h3>Week Selection</h3>
+                <div class="filter-option">
+                    <input type="checkbox" id="week1" checked>
+                    <label for="week1">Week 1 (Sept 6-12)</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="week2" checked>
+                    <label for="week2">Week 2 (Sept 13-19)</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="week3" checked>
+                    <label for="week3">Week 3 (Sept 20-26)</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="week4" checked>
+                    <label for="week4">Week 4 (Sept 27-Oct 1)</label>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="filter-section">
+                <h3>Builder Segments</h3>
+                <div class="filter-option">
+                    <input type="radio" name="segment" id="all-builders" checked>
+                    <label for="all-builders">All Builders (76)</label>
+                </div>
+                <div class="filter-option">
+                    <input type="radio" name="segment" id="top">
+                    <label for="top">Top Performers</label>
+                </div>
+                <div class="filter-option">
+                    <input type="radio" name="segment" id="struggling">
+                    <label for="struggling">Struggling</label>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="filter-section">
+                <h3>Activity Category</h3>
+                <div class="filter-option">
+                    <input type="checkbox" id="learning" checked>
+                    <label for="learning">Core Learning</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="building" checked>
+                    <label for="building">Applied Work</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="collaboration" checked>
+                    <label for="collaboration">Collaboration</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="reflection" checked>
+                    <label for="reflection">Reflection</label>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="filter-section">
+                <h3>Task Type</h3>
+                <div class="filter-option">
+                    <input type="checkbox" id="individual" checked>
+                    <label for="individual">Individual</label>
+                </div>
+                <div class="filter-option">
+                    <input type="checkbox" id="group" checked>
+                    <label for="group">Group</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- KPI Cards Row -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon">🟢</div>
+                    <div class="kpi-label">Active Builders <span class="legend-badge">ⓘ</span></div>
+                    <div class="kpi-value">68/76</div>
+                    <div class="kpi-change neutral">89% (vs 7-day avg)</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-label">Tasks Completed <span class="legend-badge">ⓘ</span></div>
+                    <div class="kpi-value">92%</div>
+                    <div class="kpi-change positive">↑ 4% vs last week</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">👥</div>
+                    <div class="kpi-label">Attendance Rate <span class="legend-badge">ⓘ</span></div>
+                    <div class="kpi-value">87%</div>
+                    <div class="kpi-change negative">↓ 4% vs last week</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">🔴</div>
+                    <div class="kpi-label">Need Intervention <span class="legend-badge">ⓘ</span></div>
+                    <div class="kpi-value">5</div>
+                    <div class="kpi-change neutral">builders flagged</div>
+                </div>
+            </div>
+
+            <!-- Engagement Trends Row -->
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Daily Active Builders (Last 30 Days)</h3>
+                    <div class="chart-placeholder">📈 Line Chart: Trend over time</div>
+                </div>
+                <div class="chart-card">
+                    <h3>Task Completion by Week</h3>
+                    <div class="chart-placeholder">📊 Bar Chart: Week 1-4 comparison</div>
+                </div>
+            </div>
+
+            <!-- Hypothesis Testing Row -->
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>H1: Attendance Drives Task Completion</h3>
+                    <div class="chart-placeholder">🔵 Scatter Plot: Attendance % vs Completion %<br>Shows correlation coefficient</div>
+                </div>
+                <div class="chart-card">
+                    <h3>H2: Activity Type Completion Patterns</h3>
+                    <div class="chart-placeholder">🕸️ Radar Chart: Completion by category<br>(Learning, Building, Reflection, etc.)</div>
+                </div>
+            </div>
+
+            <!-- Distribution Row -->
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Builder Performance Distribution</h3>
+                    <div class="chart-placeholder">📊 Histogram: How many builders at each performance level</div>
+                </div>
+                <div class="chart-card">
+                    <h3>Top 10 / Bottom 10 Builders</h3>
+                    <div class="chart-placeholder">📊 Comparative Bar: Dwight W. (21) → ... → Builder X (1)</div>
+                </div>
+            </div>
+
+            <!-- Full Width Advanced Charts -->
+            <div class="full-chart-row">
+                <div class="chart-card">
+                    <h3>Attendance Heatmap (Day of Week × Week Number)</h3>
+                    <div class="chart-placeholder" style="height: 280px;">
+                        🔥 Heatmap: See which days/weeks had best/worst attendance<br>
+                        (Mon-Wed only, darker = higher attendance)
+                    </div>
+                </div>
+            </div>
+
+            <div class="full-chart-row">
+                <div class="chart-card">
+                    <h3>Week-over-Week Improvement Trends</h3>
+                    <div class="chart-placeholder" style="height: 280px;">
+                        📈 Area Chart: Track cohort improvement trajectory<br>
+                        (Shows if builders are getting better over time)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
