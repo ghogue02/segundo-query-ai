@@ -3,9 +3,6 @@ import { executeQuery } from '@/lib/db';
 import { generateSQLFromQuestion, generateInsights } from '@/lib/claude';
 import { validateAndFixSQL } from '@/lib/sql-validator';
 
-// Increase Vercel timeout to 60 seconds
-export const maxDuration = 60;
-
 export async function POST(request: NextRequest) {
   try {
     const { question, conversationHistory, isFollowUp } = await request.json();

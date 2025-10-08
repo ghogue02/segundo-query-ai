@@ -403,21 +403,12 @@ Return ONLY valid JSON, no markdown formatting. Remember to always filter by Sep
   });
 
   try {
-    // Add timeout to prevent hanging forever
-    const messagePromise = anthropic.messages.create({
+    const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
       system: systemPrompt,
-      messages,
-      timeout: 25000 // 25 second timeout
+      messages
     });
-
-    const message = await Promise.race([
-      messagePromise,
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Claude API timeout after 25 seconds')), 25000)
-      )
-    ]);
 
     const responseText = message.content[0].type === 'text'
       ? message.content[0].text
