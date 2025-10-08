@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getTotalCurriculumDays, getTotalTaskCount, getActiveBuilderCount } from './db';
+import { getCached } from './utils/cache';
 
 export interface SQLQueryMetric {
   id: string;
@@ -228,10 +229,12 @@ export async function generateSQLFromQuestion(question: string, conversationHist
 
   const anthropic = new Anthropic({ apiKey });
 
-  // Fetch dynamic metrics
-  const totalClassDays = await getTotalCurriculumDays();
-  const totalTasks = await getTotalTaskCount();
-  const activeBuilders = await getActiveBuilderCount();
+  // Fetch dynamic metrics with caching (5 minute TTL)
+  const [totalClassDays, totalTasks, activeBuilders] = await Promise.all([
+    getCached('curriculum-days-September-2025', () => getTotalCurriculumDays(), 300),
+    getCached('total-tasks-September-2025', () => getTotalTaskCount(), 300),
+    getCached('active-builders-September-2025', () => getActiveBuilderCount(), 300)
+  ]);
 
   const systemPrompt = `You are a PostgreSQL expert helping analyze educational program data for the September 2025 cohort.
 
