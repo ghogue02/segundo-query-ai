@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Clock, Users, FileText, X, Calendar, BarChart3 } from 'lucide-react';
 import StatCard from '../shared/StatCard';
 import ProgressBar from '../shared/ProgressBar';
+import TaskSubmissionModal from '../modals/TaskSubmissionModal';
 
 interface TaskDetailPanelProps {
   taskId: number;
@@ -59,6 +60,7 @@ export default function TaskDetailPanel({ taskId, isOpen, onClose, onBuilderClic
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submissionModal, setSubmissionModal] = useState<{taskId: number, userId: number} | null>(null);
 
   useEffect(() => {
     if (!isOpen || !taskId) return;
@@ -226,7 +228,7 @@ export default function TaskDetailPanel({ taskId, isOpen, onClose, onBuilderClic
                     task.builders.map((builder) => (
                       <button
                         key={builder.user_id}
-                        onClick={() => onBuilderClick?.(builder.user_id)}
+                        onClick={() => setSubmissionModal({taskId: task.id, userId: builder.user_id})}
                         className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all group"
                       >
                         <div className="flex items-center justify-between">
@@ -283,6 +285,16 @@ export default function TaskDetailPanel({ taskId, isOpen, onClose, onBuilderClic
           )}
         </div>
       </div>
+
+      {/* Submission Modal */}
+      {submissionModal && (
+        <TaskSubmissionModal
+          taskId={submissionModal.taskId}
+          userId={submissionModal.userId}
+          isOpen={true}
+          onClose={() => setSubmissionModal(null)}
+        />
+      )}
     </>
   );
 }
