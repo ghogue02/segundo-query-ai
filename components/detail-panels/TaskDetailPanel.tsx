@@ -32,6 +32,7 @@ interface TaskDetail {
   submission_count: number;
   thread_count: number;
   completion_percentage: number;
+  active_builder_count: number;
   builders: BuilderCompletion[];
   submissions: TaskSubmissionPreview[];
 }
@@ -189,7 +190,7 @@ export default function TaskDetailPanel({ taskId, isOpen, onClose, onBuilderClic
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <StatCard
                     label="Builders Completed"
-                    value={`${task.completed_count}/75`}
+                    value={`${task.completed_count}/${task.active_builder_count}`}
                     icon={<Users className="w-5 h-5" />}
                     colorScheme={task.completion_percentage >= 80 ? 'green' : task.completion_percentage >= 60 ? 'blue' : 'yellow'}
                   />
@@ -202,7 +203,7 @@ export default function TaskDetailPanel({ taskId, isOpen, onClose, onBuilderClic
                 </div>
                 <ProgressBar
                   value={task.completed_count}
-                  max={75}
+                  max={task.active_builder_count}
                   label="Progress"
                   showPercentage={true}
                 />

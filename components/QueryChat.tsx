@@ -61,7 +61,8 @@ export default function QueryChat() {
   const [needsClarification, setNeedsClarification] = useState(false);
   const [clarificationQuestion, setClarificationQuestion] = useState('');
   const [originalQuestion, setOriginalQuestion] = useState('');
-  const [stats, setStats] = useState({ activeBuilders: 75, classDays: 18, totalTasks: 107 });
+  const [stats, setStats] = useState<{activeBuilders: number, classDays: number, totalTasks: number} | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Slide-over panel state
   const slideOver = useSlideOverState();
@@ -69,9 +70,20 @@ export default function QueryChat() {
   // Fetch stats on mount
   useEffect(() => {
     fetch('/api/stats')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(err => console.error('Failed to fetch stats:', err));
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        return res.json();
+      })
+      .then(data => {
+        setStats(data);
+        setStatsError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch stats:', err);
+        setStatsError(err.message);
+        // Fallback to default values on error
+        setStats({ activeBuilders: 75, classDays: 18, totalTasks: 107 });
+      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -293,8 +305,17 @@ export default function QueryChat() {
                 Ask about your cohort data
               </h2>
               <p className="text-gray-600 mb-4">
-                Get instant answers with auto-generated charts • {stats.activeBuilders} builders • {stats.classDays} days • {stats.totalTasks} tasks
+                {stats ? (
+                  <>Get instant answers with auto-generated charts • {stats.activeBuilders} builders • {stats.classDays} days • {stats.totalTasks} tasks</>
+                ) : (
+                  <>Get instant answers with auto-generated charts • Loading stats...</>
+                )}
               </p>
+              {statsError && (
+                <p className="text-amber-600 text-sm mb-2">
+                  Note: Using cached stats (couldn&apos;t load latest)
+                </p>
+              )}
               <div className="inline-flex gap-3 text-xs text-gray-500">
                 <span className="bg-green-100 text-green-700 px-2 py-1 rounded">Daily Operations</span>
                 <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">Trends & Analysis</span>

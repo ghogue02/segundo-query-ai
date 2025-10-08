@@ -164,7 +164,7 @@ export default async function BuilderProfilePage({ params }: { params: Promise<{
             <CardContent>
               <div className="text-3xl font-bold">{Math.round(builderData.completion_percentage)}%</div>
               <p className="text-xs text-gray-500 mt-1">
-                {builderData.tasks_completed}/{builderData.total_tasks || 107} tasks
+                {builderData.tasks_completed}/{builderData.total_tasks ?? 'N/A'} tasks
               </p>
             </CardContent>
           </Card>
@@ -176,7 +176,7 @@ export default async function BuilderProfilePage({ params }: { params: Promise<{
             <CardContent>
               <div className="text-3xl font-bold">{Math.round(builderData.attendance_percentage)}%</div>
               <p className="text-xs text-gray-500 mt-1">
-                {builderData.days_attended}/{builderData.total_days || 24} days
+                {builderData.days_attended}/{builderData.total_days ?? 'N/A'} days
               </p>
             </CardContent>
           </Card>

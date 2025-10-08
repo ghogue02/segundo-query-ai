@@ -56,7 +56,44 @@ export async function getTotalCurriculumDays(cohort: string = 'September 2025'):
     return parseInt(result[0]?.count || '0', 10);
   } catch (error) {
     console.error('Error fetching curriculum days count:', error);
-    // Fallback to 18 if query fails
-    return 18;
+    throw new Error(`Failed to fetch curriculum days for cohort ${cohort}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get total task count for a specific cohort
+ */
+export async function getTotalTaskCount(cohort: string = 'September 2025'): Promise<number> {
+  try {
+    const result = await executeQuery<{ count: string }>(
+      `SELECT COUNT(*) as count FROM tasks t
+       JOIN time_blocks tb ON t.block_id = tb.id
+       JOIN curriculum_days cd ON tb.day_id = cd.id
+       WHERE cd.cohort = $1`,
+      [cohort]
+    );
+    return parseInt(result[0]?.count || '0', 10);
+  } catch (error) {
+    console.error('Error fetching task count:', error);
+    throw new Error(`Failed to fetch task count for cohort ${cohort}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get active builder count for a specific cohort
+ */
+export async function getActiveBuilderCount(cohort: string = 'September 2025'): Promise<number> {
+  try {
+    const result = await executeQuery<{ count: string }>(
+      `SELECT COUNT(*) as count FROM users
+       WHERE cohort = $1
+         AND active = true
+         AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)`,
+      [cohort]
+    );
+    return parseInt(result[0]?.count || '0', 10);
+  } catch (error) {
+    console.error('Error fetching active builder count:', error);
+    throw new Error(`Failed to fetch active builder count for cohort ${cohort}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

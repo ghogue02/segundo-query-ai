@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getTotalCurriculumDays } from './db';
+import { getTotalCurriculumDays, getTotalTaskCount, getActiveBuilderCount } from './db';
 
 export interface SQLQueryMetric {
   id: string;
@@ -30,9 +30,9 @@ export interface SQLGenerationResponse {
 }
 
 /**
- * Generate database schema with dynamic curriculum day count
+ * Generate database schema with dynamic metrics
  */
-function getDatabaseSchema(totalClassDays: number): string {
+function getDatabaseSchema(totalClassDays: number, totalTasks: number, activeBuilders: number): string {
   return `
 ## Database Schema for September 2025 Cohort
 
@@ -48,7 +48,7 @@ function getDatabaseSchema(totalClassDays: number): string {
 - user_id (PK), first_name, last_name, email, cohort, active, role
 - **REQUIRED FILTER**: WHERE cohort = 'September 2025'
 - **REQUIRED EXCLUSIONS**: WHERE user_id NOT IN (129, 5, 240, 324, 325, 326, 9)
-- Active builders: 75 total
+- Active builders: ${activeBuilders} total
 
 **curriculum_days** - Daily curriculum structure
 - id (PK), day_number, day_date, day_type, daily_goal, learning_objectives, cohort
@@ -149,30 +149,30 @@ function getDatabaseSchema(totalClassDays: number): string {
    - **Fields**: referral_likelihood (NPS 1-10), what_we_did_well, what_to_improve
    - **Completion**: Record in builder_feedback = feedback completed
    - **Example query**: SELECT cd.day_number, COUNT(DISTINCT bf.user_id) as feedback_count FROM curriculum_days cd LEFT JOIN builder_feedback bf ON cd.day_number = bf.day_number WHERE bf.cohort = 'September 2025' GROUP BY cd.day_number
-   - **Pattern for rates**: (COUNT builders in builder_feedback / 75 total builders) * 100
+   - **Pattern for rates**: (COUNT builders in builder_feedback / ${activeBuilders} total builders) * 100
 
 2. **Total Tasks**: Join through curriculum_days → time_blocks → tasks where cohort = 'September 2025'
-   - Total curriculum tasks: 103
+   - Total curriculum tasks: ${totalTasks}
 
-3. **Completion Percentage Formula**: (COUNT(DISTINCT task_submissions.task_id) / 107.0) * 100
+3. **Completion Percentage Formula**: (COUNT(DISTINCT task_submissions.task_id) / ${totalTasks}.0) * 100
 
 4. **CORRECT Task Completion by Builder Pattern** (UNION approach - NOT COALESCE):
-   SELECT u.user_id, u.first_name, u.last_name, u.email, COUNT(DISTINCT completed_tasks.task_id) as tasks_completed, ROUND((COUNT(DISTINCT completed_tasks.task_id) / 107.0) * 100, 2) as completion_percentage FROM users u LEFT JOIN LATERAL (SELECT task_id FROM task_submissions WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025') UNION SELECT task_id FROM task_threads WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) completed_tasks ON true WHERE u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332) GROUP BY u.user_id, u.first_name, u.last_name, u.email ORDER BY completion_percentage DESC LIMIT 20
+   SELECT u.user_id, u.first_name, u.last_name, u.email, COUNT(DISTINCT completed_tasks.task_id) as tasks_completed, ROUND((COUNT(DISTINCT completed_tasks.task_id) / ${totalTasks}.0) * 100, 2) as completion_percentage FROM users u LEFT JOIN LATERAL (SELECT task_id FROM task_submissions WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025') UNION SELECT task_id FROM task_threads WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) completed_tasks ON true WHERE u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332) GROUP BY u.user_id, u.first_name, u.last_name, u.email ORDER BY completion_percentage DESC LIMIT 20
 
 5. **CORRECT Task Completion Rate by Task Pattern** (for task analysis):
-   SELECT t.id as task_id, t.task_title, t.task_mode, t.task_type, cd.day_number, COUNT(DISTINCT u.user_id) as completed_by, ROUND((COUNT(DISTINCT u.user_id)::numeric / 75) * 100, 2) as completion_rate FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id LEFT JOIN task_submissions ts ON t.id = ts.task_id LEFT JOIN task_threads tt ON t.id = tt.task_id LEFT JOIN users u ON (ts.user_id = u.user_id OR tt.user_id = u.user_id) WHERE cd.cohort = 'September 2025' AND (u.user_id IS NULL OR (u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) GROUP BY t.id, t.task_title, t.task_mode, t.task_type, cd.day_number ORDER BY completion_rate ASC LIMIT 20
+   SELECT t.id as task_id, t.task_title, t.task_mode, t.task_type, cd.day_number, COUNT(DISTINCT u.user_id) as completed_by, ROUND((COUNT(DISTINCT u.user_id)::numeric / ${activeBuilders}) * 100, 2) as completion_rate FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id LEFT JOIN task_submissions ts ON t.id = ts.task_id LEFT JOIN task_threads tt ON t.id = tt.task_id LEFT JOIN users u ON (ts.user_id = u.user_id OR tt.user_id = u.user_id) WHERE cd.cohort = 'September 2025' AND (u.user_id IS NULL OR (u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) GROUP BY t.id, t.task_title, t.task_mode, t.task_type, cd.day_number ORDER BY completion_rate ASC LIMIT 20
 
 6. **CORRECT Weekly Feedback Completion Query** (uses builder_feedback table):
-   SELECT cd.day_number, cd.day_date, t.task_title, COUNT(DISTINCT bf.user_id) as feedback_submissions, ROUND((COUNT(DISTINCT bf.user_id)::numeric / 75) * 100, 2) as completion_percentage FROM curriculum_days cd JOIN time_blocks tb ON cd.id = tb.day_id JOIN tasks t ON tb.id = t.block_id LEFT JOIN builder_feedback bf ON bf.day_number = cd.day_number AND bf.cohort = 'September 2025' AND bf.user_id IN (SELECT user_id FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)) WHERE cd.cohort = 'September 2025' AND t.feedback_slot = true GROUP BY cd.day_number, cd.day_date, t.id, t.task_title ORDER BY cd.day_number
+   SELECT cd.day_number, cd.day_date, t.task_title, COUNT(DISTINCT bf.user_id) as feedback_submissions, ROUND((COUNT(DISTINCT bf.user_id)::numeric / ${activeBuilders}) * 100, 2) as completion_percentage FROM curriculum_days cd JOIN time_blocks tb ON cd.id = tb.day_id JOIN tasks t ON tb.id = t.block_id LEFT JOIN builder_feedback bf ON bf.day_number = cd.day_number AND bf.cohort = 'September 2025' AND bf.user_id IN (SELECT user_id FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)) WHERE cd.cohort = 'September 2025' AND t.feedback_slot = true GROUP BY cd.day_number, cd.day_date, t.id, t.task_title ORDER BY cd.day_number
 
 ### Business Rules:
 - No classes on Thursday/Friday
-- Active builders count: 77 (after all exclusions)
+- Active builders count: ${activeBuilders} (after all exclusions)
 - Exclude user_ids: 129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332 from ALL builder analysis
   - Staff: 129 (Afiya Augustine), 5 (Greg Hogue), 240/326 (Carlos Godoy)
   - Inactive: 324 (Farid duplicate), 325 (Aaron Glaser), 9 (Laziah Bernstine)
   - Volunteers: 327 (Jason Specland), 329 (Brian Heckman), 331 (Hasani Blackwell), 330 (David Caiafa)
-- Total curriculum tasks: 103
+- Total curriculum tasks: ${totalTasks}
 - Total possible class days: ${totalClassDays} (dynamically calculated from curriculum_days table)
 - Schedule: Mon (1), Tue (2), Wed (3), Sat (6), Sun (0) - NO Thu(4) or Fri(5)
 - NO CLASS on Sept 15 (Monday) - excluded from curriculum
@@ -209,12 +209,14 @@ export async function generateSQLFromQuestion(question: string, conversationHist
 
   const anthropic = new Anthropic({ apiKey });
 
-  // Fetch dynamic curriculum day count
+  // Fetch dynamic metrics
   const totalClassDays = await getTotalCurriculumDays();
+  const totalTasks = await getTotalTaskCount();
+  const activeBuilders = await getActiveBuilderCount();
 
   const systemPrompt = `You are a PostgreSQL expert helping analyze educational program data for the September 2025 cohort.
 
-${getDatabaseSchema(totalClassDays)}
+${getDatabaseSchema(totalClassDays, totalTasks, activeBuilders)}
 
 CRITICAL REQUIREMENTS:
 1. **COHORT FILTERING**: Every query MUST filter by cohort = 'September 2025'. This is NON-NEGOTIABLE.

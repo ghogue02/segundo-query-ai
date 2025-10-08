@@ -20,6 +20,7 @@ export interface TaskDetail {
   submission_count: number;
   thread_count: number;
   completion_percentage: number;
+  active_builder_count: number;
 }
 
 export interface BuilderCompletion {
@@ -42,7 +43,14 @@ export interface TaskSubmissionPreview {
 
 export async function getTaskDetail(taskId: number): Promise<TaskDetail | null> {
   const query = `
-    WITH task_completion AS (
+    WITH active_builder_count AS (
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE cohort = 'September 2025'
+        AND active = true
+        AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)
+    ),
+    task_completion AS (
       SELECT
         t.id as task_id,
         COUNT(DISTINCT u.user_id) as completed_count,
@@ -56,7 +64,7 @@ export async function getTaskDetail(taskId: number): Promise<TaskDetail | null> 
         AND (u.user_id IS NULL OR (
           u.cohort = 'September 2025'
           AND u.active = true
-          AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9)
+          AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)
         ))
       GROUP BY t.id
     ),
@@ -87,7 +95,8 @@ export async function getTaskDetail(taskId: number): Promise<TaskDetail | null> 
       COALESCE(tc.completed_count, 0) as completed_count,
       COALESCE(tc.submission_count, 0) as submission_count,
       COALESCE(tc.thread_count, 0) as thread_count,
-      ROUND((COALESCE(tc.completed_count, 0)::numeric / 75) * 100, 2) as completion_percentage
+      (SELECT count FROM active_builder_count) as active_builder_count,
+      ROUND((COALESCE(tc.completed_count, 0)::numeric / NULLIF((SELECT count FROM active_builder_count), 0)) * 100, 2) as completion_percentage
     FROM task_info ti
     LEFT JOIN task_completion tc ON ti.id = tc.task_id;
   `;
@@ -111,7 +120,7 @@ export async function getTaskBuilders(taskId: number): Promise<BuilderCompletion
     LEFT JOIN task_threads tt ON u.user_id = tt.user_id AND tt.task_id = $1
     WHERE u.cohort = 'September 2025'
       AND u.active = true
-      AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9)
+      AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)
       AND (ts.id IS NOT NULL OR tt.id IS NOT NULL)
     ORDER BY completed_at DESC;
   `;
@@ -132,7 +141,7 @@ export async function getTaskSubmissionPreviews(taskId: number): Promise<TaskSub
     WHERE ts.task_id = $1
       AND u.cohort = 'September 2025'
       AND u.active = true
-      AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9)
+      AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)
     ORDER BY ts.created_at DESC
     LIMIT 10;
   `;

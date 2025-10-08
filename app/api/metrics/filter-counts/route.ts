@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/db';
+import { executeQuery, getActiveBuilderCount } from '@/lib/db';
 
 const EXCLUDED_USER_IDS = [129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332];
 
 export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const cohort = searchParams.get('cohort') || 'September 2025';
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const cohort = searchParams.get('cohort') || 'September 2025';
 
     // Get segment counts (top performers and struggling builders)
     const segmentQuery = `
@@ -76,10 +77,19 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Filter counts API error:', error);
+
+    // Try to get at least the active builder count for fallback
+    let fallbackBuilderCount = 75; // Default fallback
+    try {
+      fallbackBuilderCount = await getActiveBuilderCount(cohort);
+    } catch (fallbackError) {
+      console.error('Failed to fetch fallback builder count:', fallbackError);
+    }
+
     // Return default counts on error to prevent UI breakage
     return NextResponse.json({
       segments: {
-        all: 75,
+        all: fallbackBuilderCount,
         top: 0,
         struggling: 0
       },

@@ -1,26 +1,28 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 async function getStats() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stats`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      throw new Error('Failed to fetch stats');
-    }
-    return await res.json();
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    return { activeBuilders: 75, classDays: 18, totalTasks: 107 }; // Fallback
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stats`, {
+    cache: 'no-store'
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch stats');
   }
+  return await res.json();
 }
 
 export default async function HomePage() {
-  const stats = await getStats();
+  let stats;
+  let statsError = false;
+
+  try {
+    stats = await getStats();
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    statsError = true;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -147,26 +149,39 @@ export default async function HomePage() {
         </div>
 
         {/* Stats Bar */}
-        <Card className="mt-16 max-w-4xl mx-auto">
-          <CardContent className="p-8">
-            <div className="grid grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold text-black">{stats.activeBuilders}</div>
-                <div className="text-sm text-gray-600 mt-1">Active Builders</div>
+        {statsError ? (
+          <Card className="mt-16 max-w-4xl mx-auto border-red-300 bg-red-50">
+            <CardContent className="p-8">
+              <div className="text-center">
+                <div className="text-red-600 font-semibold mb-2">⚠️ Unable to load current stats</div>
+                <p className="text-sm text-red-700">
+                  There was an error fetching the latest cohort statistics. Please refresh the page.
+                </p>
               </div>
-              <Separator orientation="vertical" className="h-auto" />
-              <div>
-                <div className="text-4xl font-bold text-black">{stats.classDays}</div>
-                <div className="text-sm text-gray-600 mt-1">Class Days</div>
+            </CardContent>
+          </Card>
+        ) : stats ? (
+          <Card className="mt-16 max-w-4xl mx-auto">
+            <CardContent className="p-8">
+              <div className="grid grid-cols-3 gap-8 text-center">
+                <div>
+                  <div className="text-4xl font-bold text-black">{stats.activeBuilders}</div>
+                  <div className="text-sm text-gray-600 mt-1">Active Builders</div>
+                </div>
+                <Separator orientation="vertical" className="h-auto" />
+                <div>
+                  <div className="text-4xl font-bold text-black">{stats.classDays}</div>
+                  <div className="text-sm text-gray-600 mt-1">Class Days</div>
+                </div>
+                <Separator orientation="vertical" className="h-auto" />
+                <div>
+                  <div className="text-4xl font-bold text-black">{stats.totalTasks}</div>
+                  <div className="text-sm text-gray-600 mt-1">Curriculum Tasks</div>
+                </div>
               </div>
-              <Separator orientation="vertical" className="h-auto" />
-              <div>
-                <div className="text-4xl font-bold text-black">{stats.totalTasks}</div>
-                <div className="text-sm text-gray-600 mt-1">Curriculum Tasks</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* No Class Notice (Thu/Fri) */}
         {(new Date().getDay() === 4 || new Date().getDay() === 5) && (
