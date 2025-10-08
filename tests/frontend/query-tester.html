@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segundo Query Tester - Interactive Testing Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sql-highlight {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .hardcoded {
+            background-color: #fee;
+            color: #c00;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .dynamic {
+            background-color: #efe;
+            color: #060;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .validation-pass {
+            color: #10b981;
+        }
+        .validation-fail {
+            color: #ef4444;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .results-table {
+            max-height: 400px;
+            overflow: auto;
+        }
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .results-table th {
+            background-color: #f3f4f6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .results-table th, .results-table td {
+            border: 1px solid #e5e7eb;
+            padding: 8px;
+            text-align: left;
+        }
+        .results-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-6 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">🔬 Segundo Query Tester</h1>
+            <p class="text-gray-600 mb-4">Interactive testing interface for natural language queries</p>
+
+            <!-- Usage Instructions -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <h3 class="font-bold text-blue-900 mb-2">📋 Usage Instructions</h3>
+                <ul class="text-sm text-blue-800 list-disc list-inside space-y-1">
+                    <li><strong>Enter Query:</strong> Type a natural language query or select from pre-loaded examples</li>
+                    <li><strong>Test Query:</strong> Click the button to execute and see validation results</li>
+                    <li><strong>Validation Checks:</strong> Look for 🟢 (pass) or 🔴 (fail) indicators</li>
+                    <li><strong>SQL Review:</strong> Hardcoded numbers appear in RED, dynamic queries in GREEN</li>
+                    <li><strong>Export Results:</strong> Save test results as JSON for documentation</li>
+                    <li><strong>API Endpoint:</strong> Configure your API URL below (defaults to localhost:3000)</li>
+                </ul>
+            </div>
+
+            <!-- API Configuration -->
+            <div class="flex gap-4 items-end mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Endpoint URL</label>
+                    <input type="text" id="apiUrl" value="http://localhost:3000"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="http://localhost:3000">
+                </div>
+                <button onclick="testConnection()"
+                        class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    Test Connection
+                </button>
+            </div>
+            <div id="connectionStatus" class="text-sm mt-2"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Panel: Input -->
+            <div class="space-y-6">
+                <!-- Pre-loaded Test Queries -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">📝 Select Test Query</h2>
+                    <select id="exampleQueries" onchange="loadExample()"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4">
+                        <option value="">-- Select an example query --</option>
+                        <optgroup label="Attendance Queries">
+                            <option value="What is the attendance rate for the September 2025 cohort?">What is the attendance rate for the September 2025 cohort?</option>
+                            <option value="Show me attendance trends over the last 2 weeks">Show me attendance trends over the last 2 weeks</option>
+                            <option value="Who has the best attendance in the cohort?">Who has the best attendance in the cohort?</option>
+                            <option value="How many builders were present on Monday this week?">How many builders were present on Monday this week?</option>
+                        </optgroup>
+                        <optgroup label="Task Completion Queries">
+                            <option value="What is the average task completion rate?">What is the average task completion rate?</option>
+                            <option value="Show me task completion rates by day of week">Show me task completion rates by day of week</option>
+                            <option value="Which builders have the highest task completion rates?">Which builders have the highest task completion rates?</option>
+                            <option value="How many tasks were completed last week?">How many tasks were completed last week?</option>
+                        </optgroup>
+                        <optgroup label="Builder Performance">
+                            <option value="Who are the top 10 performing builders?">Who are the top 10 performing builders?</option>
+                            <option value="Show me builders who need support">Show me builders who need support</option>
+                            <option value="What is the distribution of task completion rates?">What is the distribution of task completion rates?</option>
+                            <option value="Compare attendance vs task completion rates">Compare attendance vs task completion rates</option>
+                        </optgroup>
+                        <optgroup label="Multi-Metric Queries">
+                            <option value="Show me attendance and task completion for each builder">Show me attendance and task completion for each builder</option>
+                            <option value="What are the key metrics for the September cohort?">What are the key metrics for the September cohort?</option>
+                            <option value="Give me a weekly summary of all metrics">Give me a weekly summary of all metrics</option>
+                        </optgroup>
+                        <optgroup label="Time-Based Trends">
+                            <option value="Show attendance trends by week">Show attendance trends by week</option>
+                            <option value="How has task completion changed over time?">How has task completion changed over time?</option>
+                            <option value="Compare this week to last week">Compare this week to last week</option>
+                            <option value="What are the daily trends for September?">What are the daily trends for September?</option>
+                        </optgroup>
+                    </select>
+
+                    <!-- Query Input -->
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Natural Language Query</label>
+                    <textarea id="queryInput" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter your natural language query here..."></textarea>
+
+                    <button onclick="testQuery()"
+                            class="w-full mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        🚀 Test Query
+                    </button>
+                </div>
+
+                <!-- Validation Status -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">✅ Validation Status</h2>
+                    <div id="validationStatus" class="space-y-3">
+                        <div class="text-gray-400 text-center py-8">
+                            Run a query to see validation results
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">📤 Export Results</h2>
+                    <button onclick="exportResults()" id="exportBtn" disabled
+                            class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        Download Test Results (JSON)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="space-y-6">
+                <!-- Performance Metrics -->
+                <div class="bg-white rounded-lg shadow-md p-6" id="performanceSection" style="display: none;">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">⚡ Performance</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Response Time</div>
+                            <div class="text-2xl font-bold text-gray-900" id="responseTime">-</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Cache Status</div>
+                            <div class="text-2xl font-bold text-gray-900" id="cacheStatus">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Recommendation -->
+                <div class="bg-white rounded-lg shadow-md p-6" id="chartSection" style="display: none;">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">📊 Chart Recommendation</h2>
+                    <div id="chartRecommendation" class="text-gray-600"></div>
+                </div>
+
+                <!-- Generated SQL -->
+                <div class="bg-white rounded-lg shadow-md p-6" id="sqlSection" style="display: none;">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">🔧 Generated SQL</h2>
+                    <div id="sqlQuery" class="bg-gray-900 text-gray-100 p-4 rounded-lg sql-highlight text-sm overflow-x-auto"></div>
+                </div>
+
+                <!-- Query Results -->
+                <div class="bg-white rounded-lg shadow-md p-6" id="resultsSection" style="display: none;">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">📋 Query Results</h2>
+                    <div id="queryResults" class="results-table"></div>
+                </div>
+
+                <!-- AI Insights -->
+                <div class="bg-white rounded-lg shadow-md p-6" id="insightsSection" style="display: none;">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">🤖 AI Insights</h2>
+                    <div id="aiInsights" class="text-gray-700"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastTestResult = null;
+
+        // Test API connection
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const statusDiv = document.getElementById('connectionStatus');
+
+            statusDiv.innerHTML = '<span class="text-yellow-600">Testing connection...</span>';
+
+            try {
+                const response = await fetch(`${apiUrl}/api/health`);
+                if (response.ok) {
+                    statusDiv.innerHTML = '<span class="text-green-600">✓ Connection successful</span>';
+                } else {
+                    statusDiv.innerHTML = '<span class="text-red-600">✗ Connection failed (Status: ' + response.status + ')</span>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="text-red-600">✗ Connection failed: ' + error.message + '</span>';
+            }
+        }
+
+        // Load example query
+        function loadExample() {
+            const select = document.getElementById('exampleQueries');
+            const query = select.value;
+            if (query) {
+                document.getElementById('queryInput').value = query;
+            }
+        }
+
+        // Test query
+        async function testQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            // Show loading state
+            document.body.classList.add('loading');
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(`${apiUrl}/api/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const endTime = performance.now();
+                const responseTime = (endTime - startTime).toFixed(2);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                // Store result for export
+                lastTestResult = {
+                    query,
+                    timestamp: new Date().toISOString(),
+                    responseTime,
+                    result
+                };
+
+                // Display results
+                displayResults(result, responseTime);
+
+                // Enable export button
+                document.getElementById('exportBtn').disabled = false;
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error('Query test error:', error);
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
+
+        // Display results
+        function displayResults(result, responseTime) {
+            // Performance metrics
+            document.getElementById('performanceSection').style.display = 'block';
+            document.getElementById('responseTime').textContent = responseTime + ' ms';
+            document.getElementById('cacheStatus').textContent = result.cached ? '🟢 Cached' : '🔵 Fresh';
+
+            // Chart recommendation
+            if (result.chartType) {
+                document.getElementById('chartSection').style.display = 'block';
+                document.getElementById('chartRecommendation').innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">${getChartIcon(result.chartType)}</span>
+                        <div>
+                            <div class="font-bold text-lg">${result.chartType}</div>
+                            <div class="text-sm text-gray-600">${result.chartDescription || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // SQL query with validation
+            if (result.sql) {
+                document.getElementById('sqlSection').style.display = 'block';
+                document.getElementById('sqlQuery').innerHTML = highlightSQL(result.sql);
+            }
+
+            // Query results
+            if (result.data && result.data.length > 0) {
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('queryResults').innerHTML = formatTable(result.data);
+            }
+
+            // AI insights
+            if (result.insights) {
+                document.getElementById('insightsSection').style.display = 'block';
+                document.getElementById('aiInsights').textContent = result.insights;
+            }
+
+            // Validation status
+            displayValidation(result);
+        }
+
+        // Display validation checks
+        function displayValidation(result) {
+            const sql = result.sql || '';
+            const validations = [];
+
+            // Check for dynamic denominators
+            const hasDynamicDenominator = sql.includes('COUNT(DISTINCT') ||
+                                         sql.includes('(SELECT COUNT') ||
+                                         sql.includes('CASE WHEN');
+            validations.push({
+                label: 'Dynamic Denominator',
+                pass: hasDynamicDenominator,
+                message: hasDynamicDenominator ?
+                    'Query uses dynamic subqueries (good!)' :
+                    'Warning: May contain hardcoded denominators'
+            });
+
+            // Check for hardcoded numbers (common problematic ones)
+            const hardcodedNumbers = sql.match(/\b(17|18|75|107)\b/g);
+            validations.push({
+                label: 'No Hardcoded Values',
+                pass: !hardcodedNumbers,
+                message: hardcodedNumbers ?
+                    `Found hardcoded numbers: ${hardcodedNumbers.join(', ')}` :
+                    'No suspicious hardcoded values detected'
+            });
+
+            // Check for cohort filter
+            const hasCohortFilter = sql.toLowerCase().includes("cohort = 'september 2025'") ||
+                                   sql.toLowerCase().includes('cohort');
+            validations.push({
+                label: 'Cohort Filter Present',
+                pass: hasCohortFilter,
+                message: hasCohortFilter ?
+                    'Query filters by cohort' :
+                    'Warning: Missing cohort filter'
+            });
+
+            // Check for proper exclusions
+            const hasExclusions = sql.includes('user_id NOT IN') ||
+                                 sql.includes('user_id != ');
+            validations.push({
+                label: 'Proper Exclusions',
+                pass: hasExclusions,
+                message: hasExclusions ?
+                    'Query excludes specified users' :
+                    'Warning: No user exclusions detected'
+            });
+
+            // Check for Thursday/Friday exclusion
+            const hasWeekdayFilter = sql.toLowerCase().includes('day_of_week') ||
+                                    sql.toLowerCase().includes('dayofweek');
+            validations.push({
+                label: 'Weekday Filtering',
+                pass: hasWeekdayFilter,
+                message: hasWeekdayFilter ?
+                    'Query filters by weekday' :
+                    'Info: No weekday filtering detected'
+            });
+
+            // Render validation status
+            const validationHTML = validations.map(v => `
+                <div class="flex items-start gap-3 p-3 rounded-lg ${v.pass ? 'bg-green-50' : 'bg-red-50'}">
+                    <span class="text-2xl">${v.pass ? '🟢' : '🔴'}</span>
+                    <div class="flex-1">
+                        <div class="font-bold ${v.pass ? 'text-green-900' : 'text-red-900'}">${v.label}</div>
+                        <div class="text-sm ${v.pass ? 'text-green-700' : 'text-red-700'}">${v.message}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('validationStatus').innerHTML = validationHTML;
+        }
+
+        // Highlight SQL with validation
+        function highlightSQL(sql) {
+            let highlighted = sql;
+
+            // Highlight hardcoded numbers in RED
+            highlighted = highlighted.replace(/\b(17|18|75|107)\b/g, '<span class="hardcoded">$1</span>');
+
+            // Highlight dynamic queries in GREEN
+            highlighted = highlighted.replace(/(COUNT\(DISTINCT[^)]+\))/g, '<span class="dynamic">$1</span>');
+            highlighted = highlighted.replace(/(\(SELECT COUNT[^)]+\))/g, '<span class="dynamic">$1</span>');
+
+            return highlighted;
+        }
+
+        // Format results as table
+        function formatTable(data) {
+            if (!data || data.length === 0) {
+                return '<div class="text-gray-400 text-center py-8">No results</div>';
+            }
+
+            const keys = Object.keys(data[0]);
+
+            let html = '<table>';
+            html += '<thead><tr>';
+            keys.forEach(key => {
+                html += `<th class="font-bold text-gray-900">${key}</th>`;
+            });
+            html += '</tr></thead>';
+
+            html += '<tbody>';
+            data.forEach(row => {
+                html += '<tr>';
+                keys.forEach(key => {
+                    let value = row[key];
+                    // Format numbers nicely
+                    if (typeof value === 'number') {
+                        value = value.toLocaleString();
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            return html;
+        }
+
+        // Get chart icon
+        function getChartIcon(chartType) {
+            const icons = {
+                'Bar Chart': '📊',
+                'Line Chart': '📈',
+                'Pie Chart': '🥧',
+                'Table': '📋',
+                'Scatter Plot': '⚫',
+                'Area Chart': '📉',
+                'Histogram': '📊'
+            };
+            return icons[chartType] || '📊';
+        }
+
+        // Export results
+        function exportResults() {
+            if (!lastTestResult) {
+                alert('No test results to export');
+                return;
+            }
+
+            const dataStr = JSON.stringify(lastTestResult, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+            const filename = `query-test-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', filename);
+            link.click();
+        }
+
+        // Test connection on load
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>

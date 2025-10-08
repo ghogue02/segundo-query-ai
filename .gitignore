@@ -23,6 +23,10 @@ npm-debug.log*
 # Vercel
 .vercel
 
+# Test results
+tests/results/*.html
+tests/results/*.json
+
 # Docs with secrets
 DEPLOYMENT.md
 SUMMARY.md

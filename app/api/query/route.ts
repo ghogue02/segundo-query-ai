@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { generateSQLFromQuestion, generateInsights } from '@/lib/claude';
+import { validateAndFixSQL } from '@/lib/sql-validator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,28 @@ export async function POST(request: NextRequest) {
 
     // Generate SQL using Claude (with conversation context)
     const sqlResponse = await generateSQLFromQuestion(question, conversationHistory);
+
+    // VALIDATE AND FIX HARDCODED DENOMINATORS (single query)
+    if (sqlResponse.sql) {
+      const { sql: fixedSQL, hadIssues, fixes } = validateAndFixSQL(sqlResponse.sql);
+
+      if (hadIssues) {
+        console.warn('Fixed hardcoded SQL denominators:', fixes);
+        sqlResponse.sql = fixedSQL;
+      }
+    }
+
+    // VALIDATE AND FIX HARDCODED DENOMINATORS (multi-query)
+    if (sqlResponse.queries) {
+      sqlResponse.queries = sqlResponse.queries.map(q => {
+        const { sql: fixedSQL, hadIssues, fixes } = validateAndFixSQL(q.sql);
+        if (hadIssues) {
+          console.warn(`Fixed hardcoded SQL in ${q.id}:`, fixes);
+          return { ...q, sql: fixedSQL };
+        }
+        return q;
+      });
+    }
 
     // Check if clarification is needed
     if (sqlResponse.needsClarification) {

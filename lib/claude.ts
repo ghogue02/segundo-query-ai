@@ -36,6 +36,24 @@ function getDatabaseSchema(totalClassDays: number, totalTasks: number, activeBui
   return `
 ## Database Schema for September 2025 Cohort
 
+### 🚨 CRITICAL SQL GENERATION RULES - NEVER USE LITERAL NUMBERS IN DENOMINATORS
+
+**ABSOLUTELY FORBIDDEN IN GENERATED SQL**:
+- ❌ NEVER write: / 24 or / 17 or / 18 (hardcoded class days)
+- ❌ NEVER write: / 79 or / 75 (hardcoded builder count)
+- ❌ NEVER write: / 143 or / 107 (hardcoded task count)
+- ❌ NEVER use literal numbers in division operations for percentages
+
+**REQUIRED PATTERN - ALWAYS USE DYNAMIC SUBQUERIES**:
+- ✅ ALWAYS write: / (SELECT COUNT(*) FROM curriculum_days WHERE cohort = 'September 2025' AND EXTRACT(DOW FROM day_date) NOT IN (4, 5) AND day_date <= CURRENT_DATE)
+- ✅ ALWAYS write: / (SELECT COUNT(*) FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))
+- ✅ ALWAYS write: / (SELECT COUNT(*) FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')
+
+**WHY**: The values ${totalClassDays}, ${totalTasks}, ${activeBuilders} are provided for DOCUMENTATION ONLY.
+They tell you how many exist TODAY, but your SQL must ALWAYS query the database dynamically.
+
+**VALIDATION**: Before outputting SQL, scan it for literal numbers in denominators. If found, replace with appropriate subquery.
+
 ### CRITICAL COHORT FILTERING RULES:
 1. **ALWAYS** filter users table by: cohort = 'September 2025'
 2. **ALWAYS** filter curriculum_days table by: cohort = 'September 2025'
@@ -124,7 +142,7 @@ function getDatabaseSchema(totalClassDays: number, totalTasks: number, activeBui
 - **Late definition**: After 6:30 PM (18:30) on Mon-Wed, after 10:00 AM on Sat-Sun
 - **Total possible class days**: ${totalClassDays} (dynamically calculated from curriculum_days table)
 - **Schedule**: Mon-Wed + Sat-Sun (NO Thursday/Friday, NO Sept 15 Monday)
-- **Attendance formula**: COUNT(DISTINCT CASE WHEN status IN ('present','late') THEN DATE(check_in_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') END) / ${totalClassDays} * 100
+- **Attendance formula**: COUNT(DISTINCT CASE WHEN status IN ('present','late') THEN DATE(check_in_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') END)::numeric / (SELECT COUNT(*) FROM curriculum_days WHERE cohort = 'September 2025' AND EXTRACT(DOW FROM day_date) NOT IN (4, 5) AND day_date <= CURRENT_DATE) * 100
 - **CRITICAL for trend queries**: Always start FROM curriculum_days to ensure ONLY class days appear in results, then LEFT JOIN attendance data
 - **Punctuality formula**: ROUND((COUNT(CASE WHEN status = 'present' THEN 1 END)::numeric / NULLIF(COUNT(CASE WHEN status IN ('present', 'late') THEN 1 END), 0)) * 100, 2)
 - **Display format**: Show as "X/${totalClassDays} days (Y%)" where X = unique EST dates with status IN ('present', 'late')
@@ -149,21 +167,22 @@ function getDatabaseSchema(totalClassDays: number, totalTasks: number, activeBui
    - **Fields**: referral_likelihood (NPS 1-10), what_we_did_well, what_to_improve
    - **Completion**: Record in builder_feedback = feedback completed
    - **Example query**: SELECT cd.day_number, COUNT(DISTINCT bf.user_id) as feedback_count FROM curriculum_days cd LEFT JOIN builder_feedback bf ON cd.day_number = bf.day_number WHERE bf.cohort = 'September 2025' GROUP BY cd.day_number
-   - **Pattern for rates**: (COUNT builders in builder_feedback / ${activeBuilders} total builders) * 100
+   - **Pattern for rates**: (COUNT builders in builder_feedback)::numeric / (SELECT COUNT(*) FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)) * 100
 
 2. **Total Tasks**: Join through curriculum_days → time_blocks → tasks where cohort = 'September 2025'
    - Total curriculum tasks: ${totalTasks}
 
-3. **Completion Percentage Formula**: (COUNT(DISTINCT task_submissions.task_id) / ${totalTasks}.0) * 100
+3. **Completion Percentage Formula**: Use dynamic subquery for denominator:
+   ROUND((COUNT(DISTINCT task_id)::numeric / (SELECT COUNT(*) FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) * 100, 2)
 
-4. **CORRECT Task Completion by Builder Pattern** (UNION approach - NOT COALESCE):
-   SELECT u.user_id, u.first_name, u.last_name, u.email, COUNT(DISTINCT completed_tasks.task_id) as tasks_completed, ROUND((COUNT(DISTINCT completed_tasks.task_id) / ${totalTasks}.0) * 100, 2) as completion_percentage FROM users u LEFT JOIN LATERAL (SELECT task_id FROM task_submissions WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025') UNION SELECT task_id FROM task_threads WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) completed_tasks ON true WHERE u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332) GROUP BY u.user_id, u.first_name, u.last_name, u.email ORDER BY completion_percentage DESC LIMIT 20
+4. **CORRECT Task Completion by Builder Pattern** (UNION approach with DYNAMIC SUBQUERY):
+   SELECT u.user_id, u.first_name, u.last_name, u.email, COUNT(DISTINCT completed_tasks.task_id) as tasks_completed, ROUND((COUNT(DISTINCT completed_tasks.task_id)::numeric / (SELECT COUNT(*) FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) * 100, 2) as completion_percentage FROM users u LEFT JOIN LATERAL (SELECT task_id FROM task_submissions WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025') UNION SELECT task_id FROM task_threads WHERE user_id = u.user_id AND task_id IN (SELECT t.id FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')) completed_tasks ON true WHERE u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332) GROUP BY u.user_id, u.first_name, u.last_name, u.email ORDER BY completion_percentage DESC LIMIT 20
 
-5. **CORRECT Task Completion Rate by Task Pattern** (for task analysis):
-   SELECT t.id as task_id, t.task_title, t.task_mode, t.task_type, cd.day_number, COUNT(DISTINCT u.user_id) as completed_by, ROUND((COUNT(DISTINCT u.user_id)::numeric / ${activeBuilders}) * 100, 2) as completion_rate FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id LEFT JOIN task_submissions ts ON t.id = ts.task_id LEFT JOIN task_threads tt ON t.id = tt.task_id LEFT JOIN users u ON (ts.user_id = u.user_id OR tt.user_id = u.user_id) WHERE cd.cohort = 'September 2025' AND (u.user_id IS NULL OR (u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) GROUP BY t.id, t.task_title, t.task_mode, t.task_type, cd.day_number ORDER BY completion_rate ASC LIMIT 20
+5. **CORRECT Task Completion Rate by Task Pattern** (with DYNAMIC SUBQUERY):
+   SELECT t.id as task_id, t.task_title, t.task_mode, t.task_type, cd.day_number, COUNT(DISTINCT u.user_id) as completed_by, ROUND((COUNT(DISTINCT u.user_id)::numeric / (SELECT COUNT(*) FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) * 100, 2) as completion_rate FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id LEFT JOIN task_submissions ts ON t.id = ts.task_id LEFT JOIN task_threads tt ON t.id = tt.task_id LEFT JOIN users u ON (ts.user_id = u.user_id OR tt.user_id = u.user_id) WHERE cd.cohort = 'September 2025' AND (u.user_id IS NULL OR (u.cohort = 'September 2025' AND u.active = true AND u.user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) GROUP BY t.id, t.task_title, t.task_mode, t.task_type, cd.day_number ORDER BY completion_rate ASC LIMIT 20
 
-6. **CORRECT Weekly Feedback Completion Query** (uses builder_feedback table):
-   SELECT cd.day_number, cd.day_date, t.task_title, COUNT(DISTINCT bf.user_id) as feedback_submissions, ROUND((COUNT(DISTINCT bf.user_id)::numeric / ${activeBuilders}) * 100, 2) as completion_percentage FROM curriculum_days cd JOIN time_blocks tb ON cd.id = tb.day_id JOIN tasks t ON tb.id = t.block_id LEFT JOIN builder_feedback bf ON bf.day_number = cd.day_number AND bf.cohort = 'September 2025' AND bf.user_id IN (SELECT user_id FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)) WHERE cd.cohort = 'September 2025' AND t.feedback_slot = true GROUP BY cd.day_number, cd.day_date, t.id, t.task_title ORDER BY cd.day_number
+6. **CORRECT Weekly Feedback Completion Query** (with DYNAMIC SUBQUERY):
+   SELECT cd.day_number, cd.day_date, t.task_title, COUNT(DISTINCT bf.user_id) as feedback_submissions, ROUND((COUNT(DISTINCT bf.user_id)::numeric / (SELECT COUNT(*) FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))) * 100, 2) as completion_percentage FROM curriculum_days cd JOIN time_blocks tb ON cd.id = tb.day_id JOIN tasks t ON tb.id = t.block_id LEFT JOIN builder_feedback bf ON bf.day_number = cd.day_number AND bf.cohort = 'September 2025' AND bf.user_id IN (SELECT user_id FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332)) WHERE cd.cohort = 'September 2025' AND t.feedback_slot = true GROUP BY cd.day_number, cd.day_date, t.id, t.task_title ORDER BY cd.day_number
 
 ### Business Rules:
 - No classes on Thursday/Friday
@@ -224,14 +243,22 @@ CRITICAL REQUIREMENTS:
    - For curriculum_days: WHERE cohort = 'September 2025'
    - For any data related to users or days: JOIN to users/curriculum_days and filter by cohort
 
-2. **CONVERSATIONAL APPROACH** (ALWAYS ASK AT LEAST ONE CLARIFYING QUESTION):
+2. **DYNAMIC SQL DENOMINATORS** (ABSOLUTELY REQUIRED):
+   - NEVER use literal numbers (24, 79, 143) in division operations
+   - ALWAYS use (SELECT COUNT(*) FROM ...) subqueries for all denominators
+   - This ensures SQL remains accurate even as data grows
+   - Example: / (SELECT COUNT(*) FROM curriculum_days WHERE cohort = 'September 2025')
+   - Example: / (SELECT COUNT(*) FROM users WHERE cohort = 'September 2025' AND active = true AND user_id NOT IN (129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332))
+   - Example: / (SELECT COUNT(*) FROM tasks t JOIN time_blocks tb ON t.block_id = tb.id JOIN curriculum_days cd ON tb.day_id = cd.id WHERE cd.cohort = 'September 2025')
+
+3. **CONVERSATIONAL APPROACH** (ALWAYS ASK AT LEAST ONE CLARIFYING QUESTION):
    - **ALWAYS ask a follow-up question on the FIRST user query** to gather more context
    - Return a JSON with "needsClarification": true and "clarificationQuestion": "your question here"
    - Only generate SQL after the user provides more details in their follow-up response
    - Be helpful and suggest 2-3 specific options for the user to choose from
    - **IMPORTANT**: Keep clarificationQuestion as a single line without newlines. Use spaces instead of line breaks.
 
-3. **USER EXCLUSIONS**: Always exclude user_ids: 129, 5, 240, 324, 325, 326, 9
+3. **USER EXCLUSIONS**: Always exclude user_ids: 129, 5, 240, 324, 325, 326, 9, 327, 329, 331, 330, 328, 332
 
 4. **JSON FORMAT**: CRITICAL - Return valid JSON without control characters:
    - Do NOT use literal newlines in string values
@@ -324,7 +351,17 @@ VALIDATION CHECKLIST before generating SQL:
 ✓ Does the query filter users by cohort = 'September 2025'?
 ✓ Does the query filter curriculum_days by cohort = 'September 2025'?
 ✓ Does the query exclude the specified user_ids?
-✓ Is the question clear enough to generate accurate results?`;
+✓ Is the question clear enough to generate accurate results?
+
+FINAL SQL VALIDATION CHECKLIST (SCAN EVERY SQL QUERY BEFORE OUTPUT):
+✓ Does SQL use subqueries for ALL denominators (no literal /24, /79, /143)?
+✓ Are all denominators wrapped in (SELECT COUNT(*) FROM ...)?
+✓ Do attendance calculations use curriculum_days count subquery?
+✓ Do task calculations use tasks count subquery?
+✓ Do builder calculations use users count subquery with exclusions?
+✓ If you see ANY literal number in a division operation, REPLACE IT with the appropriate subquery before outputting the SQL.
+
+**CRITICAL**: Scan generated SQL for patterns like "/ 24" or "/ 79" or "/ 143". These MUST be replaced with dynamic subqueries.`;
 
   const messages: Array<{role: 'user' | 'assistant', content: string}> = [];
 

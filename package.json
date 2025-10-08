@@ -13,7 +13,11 @@
     "test:coverage": "jest --coverage",
     "test:services": "jest tests/services",
     "test:api": "jest tests/api",
-    "test:integration": "jest tests/integration"
+    "test:integration": "jest tests/integration",
+    "test:regression": "jest tests/regression/hardcoded-values.test.ts",
+    "test:regression-shell": "./tests/run-regression.sh",
+    "test:query": "jest tests/frontend/query-interface.test.ts --verbose",
+    "test:query-shell": "./tests/run-query-tests.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",

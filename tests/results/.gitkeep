@@ -1,0 +1,9 @@
+# Test Results Directory
+
+This directory contains test execution results:
+- `query-test-results.json` - Latest test results in JSON format
+- `test-run-*.log` - Historical test run logs with timestamps
+
+Results are automatically generated when running:
+- `./tests/run-query-tests.sh`
+- `npm run test:query`
